@@ -6005,11 +6005,32 @@ declare global {
       hide(): void;
     }
 
+    type CommonOverlayEventType =
+      'click' |
+      'dblclick' |
+      'rightclick' |
+      'mousemove' |
+      'mouseover' |
+      'mouseout' |
+      'mousedown' |
+      'mouseup' |
+      'dragstart' |
+      'dragging' |
+      'dragend' |
+      'moving' |
+      'moveend' |
+      'movealong' |
+      'touchstart' |
+      'touchmove' |
+      'touchend' |
+      'close'
+
+
     /**
      * @public
      * @private
      */
-    export abstract class Overlay extends Event<'close' | 'dragend' | 'touchend'> {}
+    export abstract class Overlay extends Event<CommonOverlayEventType> {}
 
     /**
      * DOM 类覆盖物基类
