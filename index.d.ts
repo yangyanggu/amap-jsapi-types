@@ -2031,6 +2031,7 @@ declare global {
       | "zoomend"
       | "rotatechange"
       | "rotatestart"
+      | "rotateend"
       | "mousemove"
       | "mousewheel"
       | "mouseover"
