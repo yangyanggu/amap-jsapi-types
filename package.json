@@ -1,12 +1,15 @@
 {
   "name": "@vuemap/amap-jsapi-types",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "amap-jsapi-types 是高德开放平台官网提供的地图 JSAPI2.0 的 Typescript 声明文件",
   "typings": "index.d.ts",
-  "main": "",
+  "main": "index.js",
+  "module": "index.mjs",
   "files": [
     "index.d.ts",
-    "plugins"
+    "plugins",
+    "index.js",
+    "index.mjs"
   ],
   "scripts": {
     "test": "tsc test.ts --noEmit"
