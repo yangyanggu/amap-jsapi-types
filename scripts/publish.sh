@@ -1,9 +1,7 @@
 #!/bin/sh
 
 set -e
-pnpm run build:amap
-
-cd ../src/vue-amap/dist
+cd ../
 npm publish --access public
 cd -
 
