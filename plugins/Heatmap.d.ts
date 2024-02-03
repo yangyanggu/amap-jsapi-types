@@ -29,7 +29,7 @@ export class _HeatMap {
     count?: number
   ) => void;
   /** 设置热力图展现的数据集 */
-  setDataSet: (data: DataSet, url: string, urlDataParser: Function) => void;
+  setDataSet: (data: DataSet) => void;
   hide: () => void;
   show: () => void;
   getMap: () => AMap.Map;

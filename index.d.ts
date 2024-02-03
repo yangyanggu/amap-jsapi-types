@@ -10,19 +10,26 @@ import {
   _RectangleEditor,
   _RectangleEditorOptions,
 } from "./plugins/RectangleEditor";
-import { _HeatMap, _HeatMapOptions } from "./plugins/Heatmap";
-import { _MarkerClusterer } from "./plugins/MarkerClusterer";
+import { _HeatMap, _HeatMapOptions, DataSet as HeatMapDataSet } from "./plugins/Heatmap";
+import { _MarkerClusterer, MarkerClusterData } from "./plugins/MarkerClusterer";
 import { _RangingTool, _RangingToolOptions } from "./plugins/RangingTool";
 import { _PolygonEditor, _PolygonEditorOptions } from "./plugins/PolygonEditor";
 import {
   _PolylineEditor,
   _PolylineEditorOptions,
 } from "./plugins/PolylineEditor";
+import {_CitySearch, CitySearchCallbackType, CitySearchLocalCityResult} from './plugins/CitySearch'
+import {_Geolocation, GeolocationOptions, getCityInfoCallback, getCurrentPositionCallback, CurrentPositionResult, GeolocationAddressComponent} from './plugins/Geolocation'
+import {_Weather, WeatherLiveResult, WeatherForecastResult, WeatherForecastItemResult} from './plugins/Weather'
+import {_AutoComplete, AutoCompleteOptions, AutoCompletePoiType, AutoCompleteSearchCallbackResult} from './plugins/AutoComplete'
+import {GeoJSONOptions, _GeoJSON} from './plugins/GeoJSON'
+
+
 declare global {
   interface Window {
     AMap: typeof AMap;
   }
-  namespace AMap {
+  export namespace AMap {
     /**
      * @public
      */
@@ -45,6 +52,33 @@ declare global {
       has(vector: any): boolean;
       clear(): void;
       setOptions(opts: any): void;
+    }
+
+    export type getConfigType = () => {
+      adcode: string
+      appname: string
+      callback: string
+      client: string
+      db: string
+      domain: string
+      gaodeserver: string
+      host: string
+      jscode: string
+      key: string
+      keytype: string
+      markers: string
+      mo: string
+      pc: string
+      protocol: string
+      qT: string
+      server: string
+      v_: string
+      vdataProxy: string
+      version: string
+      workerUrl: string
+      y_: string
+      JH: string
+      YT: string
     }
 
     /**
@@ -229,7 +263,7 @@ declare global {
        *
        * @name contains
        * @function
-       * @param {LngLat} obj
+       * @param {LngLat} center
        * @return {Boolean}
        * @memberof Bounds
        * @instance
@@ -263,13 +297,13 @@ declare global {
     /**
      * @public
      * @constant
-     * @property {string }us 当前浏览器userAgent
+     * @property {string }ua 当前浏览器userAgent
      * @property {boolean}	mobile	是否移动设备
      * @property {string} plat 平台类型，如：'windows'、'mac'、'ios'、'android'、'other'
      * @property  {boolean} windows	是否windows设备
      * @property {boolean} ios 	是否iOS设备
      * @property {boolean} iPad		是否iPad
-     * @property {boolean} Phone		是否iPhone
+     * @property {boolean} iPhone		是否iPhone
      * @property {boolean} android		是否安卓设备
      * @property {boolean} android23		是否安卓4以下系统
      * @property {boolean} chrome		是否Chrome浏览器
@@ -377,7 +411,7 @@ declare global {
      *
      * @export
      * @public
-     * @class BuildingLayer
+     * @class Buildings
      * @name Buildings
      * @extends Layer
      * @example
@@ -388,7 +422,7 @@ declare global {
      * });
      * map.addLayer(buildingLayer);
      */
-    export class BuildingLayer extends BuildingLayer_2 {
+    export class Buildings extends Layer {
       constructor(opts?: Partial<BuildingLayerOpts> | any);
       /**
        * 设置楼块图层样式 </br>
@@ -425,14 +459,6 @@ declare global {
        * buildingLayer.setStyle(options); //此配色优先级高于自定义mapStyle
        */
       setStyle(styleOpts: BuildingStyleOptions): void;
-    }
-
-    /**
-     * @public
-     */
-    class BuildingLayer_2 extends Layer {
-      CLASS_NAME: string;
-      constructor();
     }
 
     /**
@@ -873,7 +899,7 @@ declare global {
        * @instance
        * @function
        */
-      open(map: Map_2, position: Vector2): void;
+      open(map: Map, position: Vector2): void;
       /**
        * 关闭右键菜单
        * @name close
@@ -924,7 +950,7 @@ declare global {
      * @extends {Event}
      */
     export abstract class Control extends Event {
-      map: Map_2;
+      map: Map;
 
       constructor(opts: ControlConfig);
       /**
@@ -936,7 +962,7 @@ declare global {
        * @instance
        * @memberof Control
        */
-      addTo(map: Map_2): void;
+      addTo(map: Map): void;
       /**
        * 从地图上移除控件
        *
@@ -947,7 +973,7 @@ declare global {
        * @instance
        * @memberof Control
        */
-      removeFrom(map: Map_2): void;
+      removeFrom(map: Map): void;
       /**
        * 从地图上移除控件
        *
@@ -1029,6 +1055,9 @@ declare global {
      */
     export class HawkEye extends AMap.Control {
       constructor(options?: HawkEyeOptions);
+
+      open: () => void
+      close: () => void
     }
 
 
@@ -1062,7 +1091,7 @@ declare global {
      *
      * @public
      */
-    export class MapType {
+    export class MapType extends Control{
       /**
        *
        * @public
@@ -1140,9 +1169,6 @@ declare global {
     abstract class CoreCircleMarker extends VectorOverlay {
       readonly className: OverlayType;
 
-      // SimpleCircleBucket ??
-      _circleBucket: SimpleCircleBucket;
-
       /**
        * 设置圆点中心
        * @name setCenter
@@ -1198,25 +1224,10 @@ declare global {
       static readonly defaultZooms: [number, number];
       className: string;
 
-      _resource: Resource<
-        Iterable<{
-          destroy?: () => void;
-        }> & {
-          taskManger: TaskManager;
-          SDFCombineTexture: SDFCombineTexture;
-          taskThread: RenderThread;
-          drawMode: string;
-          taskQueue: TaskQueue;
-          oversea: Oversea;
-          highlight: Highlight;
-        }
-      >;
-
       _loadData?: string;
       gl?: WebGLRenderingContext;
       canvas?: HTMLCanvasElement;
       WebGLParams: any;
-      _sourceManager: SourceManager;
 
       /**
        * @private
@@ -1392,7 +1403,7 @@ declare global {
        * 设置 Map 的限制区域，设定区域限制后，传入参数为限制的 Bounds。地图仅在区域内可拖拽
        * [相关示例](https://lbs.amap.com/api/jsapi-v2/example/map/limit-map-show-range/)
        *
-       * @param {number[]|Bounds}
+       * @param {number[]|Bounds} bounds
        * @name setLimitBounds
        * @function
        * @instance
@@ -1440,7 +1451,6 @@ declare global {
       /**
        * 地图帧的标志
        * @private
-       * @memberof WorkerEvents
        */
       getStamp(): number;
       getStyleByIdForUser(id: any, zoom: number): any;
@@ -1466,11 +1476,6 @@ declare global {
       toString(): string;
 
       destroy(): void;
-      setSideBucketPath(
-        context: Context,
-        vec2Path: any,
-        holesPath: any
-      ): number;
     }
 
     /**
@@ -1601,10 +1606,10 @@ declare global {
      * @class DistrictLayer
      * @extends {Layer}
      */
-    export class DistrictLayer extends CoreDistrictLayer {
-      static "World": typeof WorldLayer;
-      static "Country": typeof CountryLayer;
-      static "Province": typeof ProvinceLayer;
+    export class DistrictLayer {
+      static "World": any;
+      static "Country": any;
+      static "Province": any;
       distsBounds?: any;
       CLASS_NAME: string;
       constructor(opts: DistrictLayerOptions);
@@ -2026,7 +2031,6 @@ declare global {
       | "zoomend"
       | "rotatechange"
       | "rotatestart"
-      | "rotatestart"
       | "mousemove"
       | "mousewheel"
       | "mouseover"
@@ -2099,7 +2103,7 @@ declare global {
        * @name on
        * @function
        * @param {String} type 事件类型
-       * @param {Function} function 回调函数
+       * @param {Function} fn 回调函数
        * @param {Object} context 事件上下文，缺省为实例本身
        * @param {Boolean} once 是否只执行一次
        * @return {Object} 当前实例
@@ -2117,7 +2121,7 @@ declare global {
        * @name off
        * @function
        * @param {String} type 事件类型
-       * @param {Function} function 事件回调函数
+       * @param {Function} fn 事件回调函数
        * @param {Object} context 事件上下文，缺省为当前实例
        * @return {Object} 当前实例
        * @memberof Event
@@ -2129,7 +2133,7 @@ declare global {
        * @name hasEvents
        * @function
        * @param {String} type 事件类型
-       * @param {Function} function 事件回调
+       * @param {Function} fn 事件回调
        * @param {Object} context 事件上下文
        * @return {Boolean}
        * @memberof Event
@@ -2165,16 +2169,6 @@ declare global {
      * @private
      */
     export interface Eventable {
-      on(...arg: any[]): void;
-      off(...arg: any[]): void;
-      emit(...arg: any[]): void;
-    }
-
-    /**
-     * @public
-     * @private
-     */
-    interface Eventable_2 {
       on(...arg: any[]): void;
       off(...arg: any[]): void;
       emit(...arg: any[]): void;
@@ -2252,7 +2246,7 @@ declare global {
     /**
      * @public
      */
-    class GLCustomLayer extends Layer {
+    export class GLCustomLayer extends Layer {
       CLASS_NAME: string;
 
       constructor(opts: GlCustomLayerOptions);
@@ -2702,7 +2696,7 @@ declare global {
      * @public
      * @private
      */
-    class IndoorLayer extends IndoorLayer_base {
+    class IndoorLayer {
       CLASS_NAME: string;
 
       constructor(opts: any);
@@ -2751,9 +2745,9 @@ declare global {
        * 显示指定 POI 的室内地图
        * @name showIndoorMap
        * @function
-       * @param {String} indoorid 建筑物 POIID (必填) [如何获取](https://lbs.amap.com/faq/js-api/map-js-api/layer/43601?_=1585657744106)
+       * @param {String} indoorId 建筑物 POIID (必填) [如何获取](https://lbs.amap.com/faq/js-api/map-js-api/layer/43601?_=1585657744106)
        * @param {Number} floor 楼层
-       * @param {String} shopid 商铺 ID
+       * @param {String} shopId 商铺 ID
        * @memberof IndoorMap
        * @instance
        */
@@ -2763,6 +2757,7 @@ declare global {
        * @name showFloor
        * @function
        * @param {number} floor 楼层
+       * @param {boolean} noMove 是否移动
        * @memberof IndoorMap
        * @instance
        */
@@ -2931,7 +2926,7 @@ declare global {
        * @instance
        * @function
        */
-      open(map: Map_2, position: Vector2, height?: number): void;
+      open(map: Map, position: Vector2, height?: number): void;
       /**
        * 关闭信息窗体
        * @memberof InfoWindow
@@ -3459,24 +3454,6 @@ declare global {
     }
 
     /**
-     * @public
-     * @private
-     */
-    export class LabelsLayer extends Layer {
-      CLASS_NAME: string;
-
-      constructor(opts?: LabelsLayerOptions);
-
-      onRemove(): void;
-      destroy(): void;
-      /**
-       * 根据 id 判断标注是否被避让掉了
-       * @returns {boolean} true 被避让掉了 / false 没有被避让
-       */
-      getLabelCollision(id: number): boolean;
-    }
-
-    /**
      * 标注层参数配置
      * @typedef {object} LabelsLayerOptions@typedef {object} LabelsLayerOptions
      * @property {boolean} visible 标注层是否可见
@@ -3511,7 +3488,7 @@ declare global {
      * // 将标注层添加到地图上
      * map.add(labelsLayer);
      */
-    class LabelsLayer_2 extends LabelsLayer {
+    export class LabelsLayer extends Layer {
       constructor(opts?: LabelsLayerOptions);
       /**
        * 获取标注层是否支持内部标注避让
@@ -3606,12 +3583,12 @@ declare global {
       /**
        * 将 labelMarker 添加到标注层上
        * @name add
-       * @param {LabelMarker[]} labelMarkers 可添加单个标注或标注数组
+       * @param {LabelMarker | LabelMarker[]} labelMarkers 可添加单个标注或标注数组
        * @memberof LabelsLayer
        * @instance
        * @function
        */
-      add(labelMarkers: LabelMarker[]): void;
+      add(labelMarkers: LabelMarker | LabelMarker[]): void;
       /**
        * 将 labelMarker 从标注层上移除
        * @name remove
@@ -3685,10 +3662,10 @@ declare global {
        * 添加到地图上
        * @instance
        * @name setMap
-       * @param {Map} 地图实例对象
+       * @param {Map} map 地图实例对象
        * @memberof Layer
        */
-      setMap(map: Map_2 | null): void;
+      setMap(map: Map | null): void;
 
       /**
        * 设置图层层级，数字越大图层层级越高
@@ -3697,7 +3674,7 @@ declare global {
        * @instance
        * @memberof Layer
        */
-      setzIndex(z: number): void;
+      setzIndex(zIndex: number): void;
       /**
        * 设置图层透明度，范围 [0 ~ 1]
        * @name setOpacity
@@ -3799,7 +3776,7 @@ declare global {
        * @memberof LayerGroup
        * @instance
        */
-      setMap(map: Map_2): this;
+      setMap(map: Map): this;
       /**
        * 判断传入的图层实例是否在集合中
        * @name hasLayer
@@ -4241,7 +4218,7 @@ declare global {
      * })
      *
      */
-    class Map_2 extends CoreMap {
+    export class Map extends CoreMap {
       _outseaDataType: string;
       constructor(div: string | HTMLDivElement, opts?: Partial<MapOptions>);
       /**
@@ -4824,8 +4801,9 @@ declare global {
        * @memberof Map
        */
       setLabelRejectMask(reject: boolean): void;
+
+      plugin: typeof plugin
     }
-    export { Map_2 as Map };
 
     /**
      * 地图属性
@@ -5413,6 +5391,407 @@ declare global {
       text?: string;
     }
 
+
+    /**
+     * 灵活点标记
+     *
+     * @public
+     * @class ElasticMarker
+     * @name ElasticMarker
+     */
+    export class ElasticMarker extends OverlayDOM {
+      type: string;
+      className: string;
+      constructor(opts?: ElasticMarkerOptions);
+      /**
+       * 获取点标记的文字提示
+       * @name getTitle
+       * @memberof Marker
+       * @instance
+       * @returns {string | undefined}
+       * @function
+       */
+      /**
+       * 获取文本标记的文字提示
+       * @name getTitle
+       * @memberof Text
+       * @instance
+       * @returns {string | undefined}
+       * @function
+       */
+      /**
+       * 获取获取灵活点标记标记的文字提示
+       * @name getTitle
+       * @memberof ElasticMarker
+       * @instance
+       * @returns {string | undefined}
+       * @function
+       */
+      getTitle(): string | undefined;
+      /**
+       * 设置鼠标滑过点标记时的文字提示
+       * @name setTitle
+       * @param {string} title 点标记的文字提示
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 设置鼠标滑过文本标记时的文字提示
+       * @name setTitle
+       * @param {string} title 文本标记的文字提示
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 设置鼠标滑过灵活点标记时的文字提示
+       * @name setTitle
+       * @param {string} title 灵活点标记的文字提示
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      setTitle(title: string): void;
+      /**
+       * 当点标记未自定义图标时，获取Icon内容
+       * @name getIcon
+       * @returns {Icon | string | undefined}
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      getIcon(): string | Icon | undefined;
+      /**
+       * 设置点标记的显示图标，设置了有效 content 则 icon 不生效
+       * @name setIcon
+       * @param {Icon | string} icon 点标记中显示的图标
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      setIcon(icon: Icon | string): void;
+      /**
+       * 获取点标记文本标签内容
+       * @name getLabel
+       * @returns {LabelOptions} 文本标签设置项
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      getLabel(): LabelOptions;
+      /**
+       * 设置点标记文本标签内容
+       * @name setLabel
+       * @param {LabelOptions} opts
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      setLabel(opts: LabelOptions): void;
+      /**
+       * 获取点标记是否支持鼠标单击事件
+       * @name getClickable
+       * @returns {boolean}
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 获取文本标记是否支持鼠标单击事件
+       * @name getClickable
+       * @returns {boolean}
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 获取灵活点标记是否支持鼠标单击事件
+       * @name getClickable
+       * @returns {boolean}
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      getClickable(): boolean;
+      /**
+       * 设置点标记是否支持鼠标单击事件
+       * @name setClickable
+       * @param {boolean} clickable 默认值: true
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 设置文本标记是否支持鼠标单击事件
+       * @name setClickable
+       * @param {boolean} clickable 默认值: true
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 设置灵活点标记是否支持鼠标单击事件
+       * @name setClickable
+       * @param {boolean} clickable 默认值: true
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      setClickable(clickable?: boolean): void;
+      /**
+       * 获取点标记对象是否可拖拽移动
+       * @name getDraggable
+       * @returns {boolean}
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 获取文本标记对象是否可拖拽移动
+       * @name getDraggable
+       * @returns {boolean}
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 获取灵活点标记对象是否可拖拽移动
+       * @name getDraggable
+       * @returns {boolean}
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      getDraggable(): boolean;
+      /**
+       * 设置点标记对象是否可拖拽移动
+       * @name setDraggable
+       * @param {boolean} draggable
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 设置文本标记对象是否可拖拽移动
+       * @name setDraggable
+       * @param {boolean} draggable
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 设置灵活点标记对象是否可拖拽移动
+       * @name setDraggable
+       * @param {boolean} draggable
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      setDraggable(draggable: boolean): void;
+      /**
+       * 获取该点标记是否置顶
+       * @name getTop
+       * @returns {boolean}
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 获取该文本标记是否置顶
+       * @name getTop
+       * @returns {boolean}
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 获取该灵活点标记是否置顶
+       * @name getTop
+       * @returns {boolean}
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      getTop(): boolean;
+      /**
+       * 地图上有多个marker时，设置是否置顶该点标记
+       * @name setTop
+       * @param {boolean} isTop
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 地图上有多个marker时，设置是否置顶该文本标记
+       * @name setTop
+       * @param {boolean} isTop
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 地图上有多个marker时，设置是否置顶该灵活点标记
+       * @name setTop
+       * @param {boolean} isTop
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      setTop(isTop?: boolean): void;
+      /**
+       * 获取鼠标悬停时的光标设置
+       * @name getCursor
+       * @returns {string}
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 获取鼠标悬停时的光标设置
+       * @name getCursor
+       * @returns {string}
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 获取鼠标悬停时的光标设置
+       * @name getCursor
+       * @returns {string}
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      getCursor(): string | undefined;
+      /**
+       * 设置鼠标悬停时的光标
+       * @name setCursor
+       * @param {string} cursor
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 设置鼠标悬停时的光标
+       * @name setCursor
+       * @param {string} cursor
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 设置鼠标悬停时的光标
+       * @name setCursor
+       * @param {string} cursor
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      setCursor(cursor: string): void;
+      /**
+       * 获取用户自定义数据
+       * @name getExtData
+       * @returns {any | undefined}
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 获取用户自定义数据
+       * @name getExtData
+       * @returns {any | undefined}
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 获取用户自定义数据
+       * @name getExtData
+       * @returns {any | undefined}
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      getExtData(): any;
+      /**
+       * 设置用户自定义数据
+       * @name setExtData
+       * @param extData 用户自定义数据
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 设置用户自定义数据
+       * @name setExtData
+       * @param extData 用户自定义数据
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 设置用户自定义数据
+       * @name setExtData
+       * @param extData 用户自定义数据
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      setExtData(extData: any): void;
+      /**
+       * 移除点标记 [相关示例](https://lbs.amap.com/api/jsapi-v2/example/marker/marker-content)
+       * @name remove
+       * @memberof Marker
+       * @instance
+       * @function
+       */
+      /**
+       * 移除点标记
+       * @name remove
+       * @memberof Text
+       * @instance
+       * @function
+       */
+      /**
+       * 移除点标记
+       * @name remove
+       * @memberof ElasticMarker
+       * @instance
+       * @function
+       */
+      remove(): void;
+
+    }
+
+    /**
+     * 点标记属性
+     * @interface MarkerOptions
+     * @public
+     */
+    export interface ElasticMarkerOptions extends OverlayOptions {
+      icon?: Icon | string;
+      title?: string;
+      clickable?: boolean;
+      cursor?: string;
+      draggable?: boolean;
+      topWhenClick?: boolean;
+      bubble?: boolean;
+      zoomStyleMapping: Record<string, number>
+      styles: {
+        icon: {
+          img: string
+          size: Vector2
+          anchor: string | Vector2
+          imageOffset: string | Vector2
+          imageSize: number
+
+        }
+      }[],
+      label?: LabelOptions;
+    }
+
+
     /**
      * @public
      */
@@ -5486,7 +5865,7 @@ declare global {
        * @instance
        * @function
        */
-      setMap(map: Map_2): void;
+      setMap(map: Map): void;
       /**
        * 获取Marker所在地图对象
        * @name getMap
@@ -5495,7 +5874,7 @@ declare global {
        * @instance
        * @function
        */
-      getMap(): Map_2 | null;
+      getMap(): Map | null;
       /**
        * 输出MassMark的数据集，数据结构同setDatas中的数据集
        * @name getData
@@ -5617,57 +5996,6 @@ declare global {
 
     /**
      * @public
-     */
-    export interface NameSpace {
-      createDefaultLayer: typeof createDefaultLayer;
-      Map: typeof Map_2;
-      ImageLayer: typeof ImageLayer;
-      TileLayer: typeof TileLayer;
-      NebulaLayer: typeof NebulaLayer;
-      Buildings: typeof BuildingLayer;
-      CanvasLayer: typeof CanvasLayer;
-      CustomLayer: typeof CustomLayer;
-      LabelsLayer: typeof LabelsLayer;
-      MassMarks: typeof MassMarks;
-      Event: typeof Event;
-      IndoorMap: typeof IndoorMap;
-      version: string;
-      plugin: (plugins: string | string[], cb: any) => void;
-      LngLat: typeof LngLat;
-      Pixel: typeof Pixel;
-      Size: typeof Size;
-      Icon: typeof Icon;
-      Bounds: typeof Bounds;
-      Marker: typeof Marker;
-      Text: typeof Text;
-      InfoWindow: typeof InfoWindow;
-      ContextMenu: typeof ContextMenu;
-      LabelMarker: typeof LabelMarker;
-      Polygon: typeof Polygon;
-      Rectangle: typeof Rectangle;
-      Ellipse: typeof Ellipse;
-      Circle: typeof Circle;
-      CircleMarker: typeof CircleMarker;
-      Polyline: typeof Polyline;
-      BezierCurve: typeof BezierCurve;
-      OverlayGroup: typeof OverlayGroup;
-      LayerGroup: typeof LayerGroup;
-      Control: typeof Control;
-      convertFrom: typeof convertFrom;
-      Util: typeof Util;
-      GeometryUtil: typeof GeometryUtil;
-      DomUtil: typeof DomUtil;
-      Browser: typeof Browser;
-      getConfig: getConfigType;
-      WebService: typeof WebService;
-      extend: typeof extend;
-      BuryPoint: typeof BuryPoint;
-
-      Heatmap: typeof Heatmap;
-    }
-
-    /**
-     * @public
      * @private
      */
     export class NebulaLayer extends Layer {
@@ -5681,7 +6009,7 @@ declare global {
      * @public
      * @private
      */
-    abstract class Overlay extends Event {}
+    export abstract class Overlay extends Event<'close' | 'dragend' | 'touchend'> {}
 
     /**
      * DOM 类覆盖物基类
@@ -5697,10 +6025,10 @@ declare global {
       dom: HTMLElement;
       amapId: number;
       constructor(opts?: OverlayOptions, defaultOpts?: any);
-      getMap(): Map_2 | null;
-      setMap(map: Map_2 | null | undefined): void;
-      addTo(map: Map_2): void;
-      add(map: Map_2): void;
+      getMap(): Map | null;
+      setMap(map: Map | null | undefined): void;
+      addTo(map: Map): void;
+      add(map: Map): void;
       remove(): void;
       show(): void;
       hide(): void;
@@ -5857,7 +6185,7 @@ declare global {
      * @interface OverlayOptions
      */
     export interface OverlayOptions {
-      map?: Map_2;
+      map?: Map;
       position?: Vector2 | LngLat;
       content?: string | HTMLElement;
       visible?: boolean;
@@ -5997,6 +6325,8 @@ declare global {
     export class Polygon extends CorePolygon {
       className: OverlayType;
 
+      constructor(opts?: PolygonOptions);
+
       /**
        * 获取多边形的属性
        *
@@ -6024,9 +6354,9 @@ declare global {
        * @instance
        */
       getPath():
-        | import("../baseType/LngLat").LngLat[]
-        | import("../baseType/LngLat").LngLat[][]
-        | import("../baseType/LngLat").LngLat[][][]
+        | LngLat[]
+        | LngLat[][]
+        | LngLat[][][]
         | undefined;
       /**
        * 设置多面体拉伸高度值
@@ -6911,6 +7241,13 @@ declare global {
      */
     export type Vector2 = [number, number];
 
+    export type VectorLayerOptions = {
+      // 是否显示 default true
+      visible?: boolean
+      // 层级，默认 110
+      zIndex?: number
+    }
+
     /**
      * @public
      * @class VectorLayer
@@ -6924,7 +7261,9 @@ declare global {
      * var circle = new AMap.circle({center: [116.4, 39.9], radius:1000});
      * layer.add(circle);
      */
-    class VectorLayer extends CoreVectorLayer implements BaseLayer {
+    export class VectorLayer extends Layer implements BaseLayer {
+
+      constructor(opts: VectorLayerOptions);
       /**
        * 	添加矢量覆盖物到集合中，不支持添加重复的覆盖物
        * @name add
@@ -6933,6 +7272,7 @@ declare global {
        * @memberof VectorLayer
        * @instance
        */
+      add(vectors: VectorOverlay|Array<VectorOverlay>): void
       /**
        * 	删除矢量覆盖物
        * @name remove
@@ -6941,6 +7281,7 @@ declare global {
        * @memberof VectorLayer
        * @instance
        */
+      remove(vectors: VectorOverlay|Array<VectorOverlay>): void
       /**
        * 	显示图层
        * @name show
@@ -6948,6 +7289,7 @@ declare global {
        * @memberof VectorLayer
        * @instance
        */
+      show(): void
       /**
        * 	隐藏图层
        * @name hide
@@ -6955,6 +7297,7 @@ declare global {
        * @memberof VectorLayer
        * @instance
        */
+      hide(): void
       /**
        * 判断传入的矢量覆盖物实例是否在VectorLayer这中
        * @name has
@@ -6985,7 +7328,7 @@ declare global {
        * 根据经纬度查询矢量覆盖物信息
        * @name query
        * @function
-       * @param {LngLatLike} geometry
+       * @param {LngLatLike} lnglat
        * @memberof VectorLayer
        * @instance
        * @returns {VectorOverlay | undefined} vector 矢量覆盖物
@@ -7015,8 +7358,8 @@ declare global {
 
       constructor();
 
-      setMap(map: Map_2 | null): void;
-      getMap(): Map_2 | null;
+      setMap(map: Map | null): void;
+      getMap(): Map | null;
 
       abstract contains(...args: any[]): boolean;
 
@@ -7515,7 +7858,66 @@ declare global {
       visible?: boolean;
     }
 
-    export {};
+    export interface MapboxVectorTileLayerOptions {
+      zIndex?: number;
+      opacity?: number;
+      url: string;
+      visible?: boolean;
+      zooms?: Vector2;
+      dataZooms?: Vector2;
+      styles?: MapboxVectorTileLayerStyles
+    }
+
+    export interface MapboxVectorTileLayerStyles {
+      polygon?: {
+        sourceLayer?: string;
+        color?: string | Function ;
+        borderWidth?: string | Function;
+        dash?: number[] | Function;
+        borderColor?: string | Function;
+        injection?: any[];
+        visible?: boolean | Function;
+      },
+      line?: {
+        sourceLayer?: string;
+        color?: string | Function ;
+        lineWidth?: string | Function;
+        dash?: number[] | Function;
+        borderColor?: string | Function;
+        injection?: any[];
+        visible?: boolean | Function;
+      },
+      point?: {
+        sourceLayer?: string;
+        radius?: number | Function;
+        color?: string | Function ;
+        borderWidth?: string | Function;
+        dash?: number[] | Function;
+        borderColor?: string | Function;
+        injection?: any[];
+        visible?: boolean | Function;
+      },
+      polyhedron?: {
+        sourceLayer?: string;
+        topColor?: string | Function;
+        sideColor?: string | Function;
+        texture?: string | Function;
+        injection?: any[];
+        visible?: boolean | Function;
+      }
+    }
+
+    export class MapboxVectorTileLayer extends Layer {
+      constructor(options: MapboxVectorTileLayerOptions);
+
+      setStyles: ( styles: MapboxVectorTileLayerStyles) => void;
+      filterByRect: (rect: any, type: string) => any;
+      getStyles: () => MapboxVectorTileLayerStyles;
+      getOptions: () => MapboxVectorTileLayerOptions;
+
+    }
+
+
 
     /** 各类插件类型声明 */
     export class MouseTool extends _MouseTool {}
@@ -7532,14 +7934,33 @@ declare global {
     export class RectangleEditor extends _RectangleEditor {}
     export type RectangleEditorOptions = _RectangleEditorOptions;
     export class Hotspot extends _Hotspot {}
-    export class MarkerClusterer extends _MarkerClusterer {}
+    export class MarkerCluster extends _MarkerClusterer {}
+    export {MarkerClusterData}
     export class RangingTool extends _RangingTool {}
     export type RangingToolOptions = _RangingToolOptions;
     export class Scale extends Control {}
     export class ToolBar extends Control {}
     export class ControlBar extends Control {}
-    export type HeatMapOptions = _HeatMapOptions;
     export class HeatMap extends _HeatMap {}
+
+    export {_HeatMapOptions as HeatMapOptions, HeatMapDataSet}
+
+    export class CitySearch extends _CitySearch {}
+    export {CitySearchLocalCityResult, CitySearchCallbackType}
+
+    export class Geolocation extends _Geolocation {}
+    export {GeolocationOptions, getCityInfoCallback, getCurrentPositionCallback, CurrentPositionResult, GeolocationAddressComponent}
+
+    export class Weather extends _Weather {}
+    export {WeatherLiveResult, WeatherForecastResult, WeatherForecastItemResult}
+
+    export class Autocomplete extends _AutoComplete {}
+    export {AutoCompleteOptions, AutoCompletePoiType, AutoCompleteSearchCallbackResult, Autocomplete as AutoComplete}
+
+    export class GeoJSON extends _GeoJSON {}
+    export {GeoJSONOptions}
+
+    export {};
   }
 }
 export {};

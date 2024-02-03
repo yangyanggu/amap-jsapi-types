@@ -2,7 +2,7 @@
 // import { default as Namespace } from ".";
 // import { AMap } from ".";
 import ".";
-function loader(test: AMap.NameSpace) {
+function loader() {
   let a: AMap.CircleMarkerOptions;
   new AMap.Circle();
   AMap.createDefaultLayer();
@@ -124,7 +124,7 @@ function Layers() {
   new AMap.TileLayer.WMTS();
   new AMap.TileLayer.Flexible({});
 
-  new AMap.BuildingLayer({});
+  new AMap.Buildings({});
   new AMap.DistrictLayer({});
   new AMap.LabelsLayer();
   new AMap.CustomLayer(document.createElement("canvas"), {

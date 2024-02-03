@@ -1,5 +1,3 @@
-import { MarkOptions } from "perf_hooks";
-
 export type HotspotEventType = "click" | "mouseover" | "mouseout";
 
 export class _Hotspot extends AMap.Event<HotspotEventType> {

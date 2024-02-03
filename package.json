@@ -1,9 +1,9 @@
 {
-  "name": "@amap/amap-jsapi-types",
-  "version": "0.0.13",
+  "name": "@vuemap/amap-jsapi-types",
+  "version": "0.0.14",
   "description": "amap-jsapi-types 是高德开放平台官网提供的地图 JSAPI2.0 的 Typescript 声明文件",
   "typings": "index.d.ts",
-  "main": "index.js",
+  "main": "",
   "files": [
     "index.d.ts",
     "plugins"
@@ -11,7 +11,7 @@
   "scripts": {
     "test": "tsc test.ts --noEmit"
   },
-  "repository": "https://github.com/AMap-Web/amap-jsapi-types",
+  "repository": "https://github.com/yangyanggu/amap-jsapi-types",
   "author": "donglai.ydl",
   "license": "MIT",
   "devDependencies": {

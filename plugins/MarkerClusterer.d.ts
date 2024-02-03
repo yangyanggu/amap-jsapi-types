@@ -53,15 +53,15 @@ export interface _MarkerClustererOptions {
   zoomOnClick?: boolean;
 }
 
-export interface MarkerOptions {
+export type MarkerClusterData =  {
   lnglat: [number, number];
   weight?: number;
-}
+}[]
 
 export class _MarkerClusterer extends AMap.Event<"click"> {
   constructor(
     map: AMap.Map,
-    markers: MarkerOptions[],
+    markers:MarkerClusterData,
     options: _MarkerClustererOptions
   );
   /** 添加一个需进行聚合的点标记 */
@@ -99,4 +99,17 @@ export class _MarkerClusterer extends AMap.Event<"click"> {
   isAverageCenter: () => boolean;
   /** 设置单个聚合点位置是否是聚合内所有标记的平均中心 */
   setAverageCenter: (averageCenter: boolean) => void;
+  /**
+   * 设置数据，格式同 dataOptions
+   *
+   * @param {MarkerClusterData} data
+   */
+  setData: (data: MarkerClusterData) => void;
+
+  /**
+   * 在原数据基础上添加数据，格式同 dataOptions
+   *
+   * @param {MarkerClusterData} data
+   */
+  addData: (data: MarkerClusterData) => void;
 }
