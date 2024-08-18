@@ -1,17 +1,17 @@
-# @amap/amap-jsapi-types
+# @vuemap/amap-jsapi-types
 
-@amap/amap-jsapi-types 是高德开放平台官网提供的地图 JSAPI2.0 的 Typescript 声明文件。旨在为开发者提供 Typescript 环境下的类型提示，提升开发体验。
+> fork自@amap/amap-jsapi-types，完善缺失的类型，包含常用插件
 
-> 目前仅包含 JSAPI2.0 核心文件的接口，不包含插件的接口！ 
+@vuemap/amap-jsapi-types 是从高德开放平台官网fork的的地图 JSAPI2.0 的 Typescript 声明文件。旨在为开发者提供 Typescript 环境下的类型提示，提升开发体验。
 
 ## INSTALL
 
-`npm i -S @amap/amap-jsapi-types`
+`npm i -S @vuemap/amap-jsapi-types`
 
 ## USAGE
 
 ```ts
-import "@amap/amap-jsapi-types";
+import "@vuemap/amap-jsapi-types";
 
 const mapOptions: AMap.MapOptions = {
   center :[116.45, 39.92],
@@ -27,9 +27,33 @@ const circle :AMap.CircleMarker = new AMap.CircleMarker({
 map.add(circle);
 ```
 
-# 相关链接：
+## 用法
 
-地&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;图 JSAPI：  &nbsp;&nbsp;[示例中心](https://lbs.amap.com/demo-center/jsapi-v2)&nbsp;&nbsp;&nbsp;&nbsp;[教程](https://lbs.amap.com/api/jsapi-v2/summary)&nbsp;&nbsp;&nbsp;&nbsp;[参考手册](https://lbs.amap.com/api/jsapi-v2/documentation)
+### tsconfig.json配置示例
 
-官方 JSAPI 加载器：  &nbsp;&nbsp;&nbsp;&nbsp;[教程](https://lbs.amap.com/api/jsapi-v2/guide/abc/load)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[NPM](https://www.npmjs.com/package/@amap/amap-jsapi-loader)
+#### 配置types
 
+```json
+{
+  "compilerOptions": {
+    "types": ["@vuemap/amap-jsapi-types"]
+  }
+}
+```
+
+#### 配置files
+
+```json
+{
+  "files": ["node_modules/@vuemap/amap-jsapi-types/index.d.ts"]
+}
+
+```
+
+### ts文件使用
+
+```ts
+/// <reference types="@vuemap/amap-jsapi-types" />
+```
+
+### 

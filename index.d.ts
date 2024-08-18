@@ -23,6 +23,7 @@ import {_Geolocation, GeolocationOptions, getCityInfoCallback, getCurrentPositio
 import {_Weather, WeatherLiveResult, WeatherForecastResult, WeatherForecastItemResult} from './plugins/Weather'
 import {_AutoComplete, AutoCompleteOptions, AutoCompletePoiType, AutoCompleteSearchCallbackResult} from './plugins/AutoComplete'
 import {GeoJSONOptions, _GeoJSON} from './plugins/GeoJSON'
+import {_Geocoder, GeocoderOptions, GeocodeResult, ReGeocodeResult} from './plugins/Geocoder'
 
 
 declare global {
@@ -7981,6 +7982,9 @@ declare global {
 
     export class GeoJSON extends _GeoJSON {}
     export {GeoJSONOptions}
+
+    export class Geocoder extends _Geocoder {}
+    export {GeocoderOptions, GeocodeResult, ReGeocodeResult}
 
     export {};
   }
